@@ -1,3 +1,5 @@
+import AuthButtons from "@/components/AuthButtons";
+
 export default function Home() {
   return (
     <div className="flex min-h-screen flex-col items-center bg-zinc-50 font-sans dark:bg-zinc-950">
@@ -6,9 +8,7 @@ export default function Home() {
           <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">
             Uptop Rain
           </h1>
-          <div>
-            {/* TODO: Auth buttons (Sign In / Sign Out) */}
-          </div>
+          <AuthButtons />
         </div>
       </header>
 
