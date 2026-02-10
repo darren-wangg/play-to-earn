@@ -77,7 +77,7 @@ Picked "opponent":  adjustedMargin < 0 = won (+100pts), > 0 = lost, === 0 = push
 - [x] Phase 0: Scaffolding (monorepo structure, deps, env vars, module stubs, schemas, guards, frontend shell)
 - [x] Phase 1: Data Models & Database
 - [x] Phase 2: Odds API Integration
-- [ ] Phase 3: Authentication
+- [x] Phase 3: Authentication
 - [ ] Phase 4: Betting Endpoints
 - [ ] Phase 5: Settlement
 - [ ] Phase 6: Frontend UI
