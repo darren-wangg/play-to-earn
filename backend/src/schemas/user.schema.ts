@@ -10,6 +10,12 @@ export class User {
 
   @Prop({ default: 0 })
   points: number;
+
+  @Prop()
+  passwordHash?: string;
+
+  @Prop({ type: [String], default: [] })
+  authProviders: string[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

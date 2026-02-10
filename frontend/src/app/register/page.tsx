@@ -4,29 +4,58 @@ import { signIn } from "next-auth/react";
 import { useState } from "react";
 import Link from "next/link";
 
-export default function SignInPage() {
+const backendUrl =
+  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
+
+export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
     setLoading(true);
 
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
+    try {
+      const res = await fetch(`${backendUrl}/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-    setLoading(false);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.message || "Registration failed");
+        setLoading(false);
+        return;
+      }
 
-    if (result?.error) {
-      setError(result.error);
-    } else {
-      window.location.href = "/";
+      // Auto sign-in after successful registration
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      setLoading(false);
+
+      if (result?.error) {
+        setError(result.error);
+      } else {
+        window.location.href = "/";
+      }
+    } catch {
+      setError("Something went wrong. Please try again.");
+      setLoading(false);
     }
   };
 
@@ -47,17 +76,17 @@ export default function SignInPage() {
         </div>
       </div>
 
-      {/* Sign In Card */}
+      {/* Register Card */}
       <div className="animate-fade-in w-full max-w-sm overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         {/* Accent bar */}
         <div className="h-1.5 bg-gradient-to-r from-cavs-wine via-cavs-gold to-cavs-navy" />
 
         <div className="p-6 sm:p-8">
           <h2 className="mb-1 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-            Sign in to your account
+            Create your account
           </h2>
           <p className="mb-6 text-sm text-zinc-500 dark:text-zinc-400">
-            Enter your credentials to start betting
+            Sign up to start betting on Cavs games
           </p>
 
           {error && (
@@ -85,9 +114,23 @@ export default function SignInPage() {
             <input
               type="password"
               required
+              minLength={8}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
+              placeholder="At least 8 characters"
+              className="mb-4 w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3.5 py-2.5 text-sm text-zinc-900 outline-none transition-colors placeholder:text-zinc-400 focus:border-cavs-wine focus:bg-white focus:ring-2 focus:ring-cavs-wine/20 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50 dark:placeholder:text-zinc-500 dark:focus:border-cavs-gold dark:focus:ring-cavs-gold/20"
+            />
+
+            <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              Confirm password
+            </label>
+            <input
+              type="password"
+              required
+              minLength={8}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Repeat your password"
               className="mb-5 w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3.5 py-2.5 text-sm text-zinc-900 outline-none transition-colors placeholder:text-zinc-400 focus:border-cavs-wine focus:bg-white focus:ring-2 focus:ring-cavs-wine/20 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50 dark:placeholder:text-zinc-500 dark:focus:border-cavs-gold dark:focus:ring-cavs-gold/20"
             />
 
@@ -96,7 +139,7 @@ export default function SignInPage() {
               disabled={loading}
               className="w-full rounded-lg bg-cavs-wine py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-cavs-wine-light hover:shadow-md active:scale-[0.98] disabled:opacity-50 dark:bg-cavs-gold dark:text-cavs-navy dark:hover:bg-amber-400 cursor-pointer"
             >
-              {loading ? "Signing in..." : "Sign in"}
+              {loading ? "Creating account..." : "Create account"}
             </button>
           </form>
 
@@ -136,14 +179,14 @@ export default function SignInPage() {
         </div>
       </div>
 
-      {/* Register link */}
+      {/* Sign in link */}
       <p className="mt-6 text-center text-sm text-zinc-500 dark:text-zinc-400">
-        Don&apos;t have an account?{" "}
+        Already have an account?{" "}
         <Link
-          href="/register"
+          href="/signin"
           className="font-medium text-cavs-wine hover:underline dark:text-cavs-gold"
         >
-          Create one
+          Sign in
         </Link>
       </p>
     </div>
