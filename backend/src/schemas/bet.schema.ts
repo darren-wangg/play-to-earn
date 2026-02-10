@@ -8,8 +8,8 @@ export class Bet {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   userId: Types.ObjectId;
 
-  @Prop({ type: String, ref: 'Game', required: true })
-  gameId: string;
+  @Prop({ type: Types.ObjectId, ref: 'Game', required: true })
+  gameId: Types.ObjectId;
 
   @Prop({ required: true, enum: ['cavaliers', 'opponent'] })
   selection: string;

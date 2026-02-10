@@ -78,7 +78,7 @@ Picked "opponent":  adjustedMargin < 0 = won (+100pts), > 0 = lost, === 0 = push
 - [x] Phase 1: Data Models & Database
 - [x] Phase 2: Odds API Integration
 - [x] Phase 3: Authentication
-- [ ] Phase 4: Betting Endpoints
+- [x] Phase 4: Betting Endpoints
 - [ ] Phase 5: Settlement
 - [ ] Phase 6: Frontend UI
 - [ ] Phase 7: Polish & Edge Cases
