@@ -28,7 +28,7 @@ export default function AuthButtons() {
   return (
     <button
       onClick={() => signIn()}
-      className="rounded-lg bg-cavs-wine px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-cavs-wine-light hover:shadow-md active:scale-[0.98] dark:bg-cavs-gold dark:text-cavs-navy dark:hover:bg-amber-400"
+      className="rounded-lg bg-cavs-wine px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-cavs-wine-light hover:shadow-md active:scale-[0.98] dark:bg-cavs-gold dark:text-cavs-navy dark:hover:bg-amber-400 cursor-pointer"
     >
       Sign In
     </button>

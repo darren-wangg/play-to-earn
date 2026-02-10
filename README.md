@@ -1,4 +1,4 @@
-# Uptop Rain - Play-to-Earn Cavaliers Betting App
+# Uptop-Rain - Play-to-Earn Cavaliers Betting App
 
 A Play-to-Earn betting web app where users bet on the point spread of Cleveland Cavaliers NBA games. Correct bets earn 100 points.
 

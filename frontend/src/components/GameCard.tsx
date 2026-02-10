@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
+import { getTeam } from "@/constants/nba-teams";
 
 interface Game {
   _id: string;
@@ -15,42 +17,6 @@ interface Game {
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
 const CAVALIERS = "Cleveland Cavaliers";
-
-function teamAbbrev(name: string) {
-  const map: Record<string, string> = {
-    "Cleveland Cavaliers": "CLE",
-    "Boston Celtics": "BOS",
-    "Milwaukee Bucks": "MIL",
-    "New York Knicks": "NYK",
-    "Philadelphia 76ers": "PHI",
-    "Miami Heat": "MIA",
-    "Orlando Magic": "ORL",
-    "Indiana Pacers": "IND",
-    "Chicago Bulls": "CHI",
-    "Atlanta Hawks": "ATL",
-    "Brooklyn Nets": "BKN",
-    "Toronto Raptors": "TOR",
-    "Detroit Pistons": "DET",
-    "Charlotte Hornets": "CHA",
-    "Washington Wizards": "WAS",
-    "Oklahoma City Thunder": "OKC",
-    "Denver Nuggets": "DEN",
-    "Minnesota Timberwolves": "MIN",
-    "Dallas Mavericks": "DAL",
-    "Phoenix Suns": "PHX",
-    "Los Angeles Lakers": "LAL",
-    "Los Angeles Clippers": "LAC",
-    "Sacramento Kings": "SAC",
-    "Golden State Warriors": "GSW",
-    "Houston Rockets": "HOU",
-    "Memphis Grizzlies": "MEM",
-    "New Orleans Pelicans": "NOP",
-    "San Antonio Spurs": "SAS",
-    "Portland Trail Blazers": "POR",
-    "Utah Jazz": "UTA",
-  };
-  return map[name] || name.slice(0, 3).toUpperCase();
-}
 
 function formatGameTime(iso: string) {
   const d = new Date(iso);
@@ -73,6 +39,41 @@ function formatGameTime(iso: string) {
   if (diffH > 24) return { dateStr, timeStr, countdown: `${Math.floor(diffH / 24)}d ${diffH % 24}h` };
   if (diffH > 0) return { dateStr, timeStr, countdown: `${diffH}h ${diffM}m` };
   return { dateStr, timeStr, countdown: `${diffM}m` };
+}
+
+function TeamLogo({ teamName, isCavs }: { teamName: string; isCavs: boolean }) {
+  const team = getTeam(teamName);
+
+  if (team.logo) {
+    return (
+      <div
+        className={`flex h-16 w-16 items-center justify-center rounded-full shadow-md transition-transform hover:scale-105 sm:h-20 sm:w-20 ${
+          isCavs
+            ? "bg-cavs-wine/10 ring-2 ring-cavs-wine dark:bg-cavs-wine/20 dark:ring-cavs-gold"
+            : "bg-zinc-100 dark:bg-zinc-800"
+        }`}
+      >
+        <Image
+          src={team.logo}
+          alt={team.name}
+          width={56}
+          height={56}
+          className="h-10 w-10 object-contain sm:h-14 sm:w-14"
+          unoptimized
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={`flex h-16 w-16 items-center justify-center rounded-full text-lg font-bold text-white shadow-md transition-transform hover:scale-105 sm:h-20 sm:w-20 sm:text-xl ${
+        isCavs ? "bg-cavs-wine" : "bg-zinc-400 dark:bg-zinc-600"
+      }`}
+    >
+      {team.abbrev}
+    </div>
+  );
 }
 
 export default function GameCard({
@@ -118,7 +119,7 @@ export default function GameCard({
     return (
       <div className="animate-fade-in rounded-xl border border-zinc-200 bg-white p-8 text-center dark:border-zinc-800 dark:bg-zinc-900">
         <p className="text-lg text-zinc-500 dark:text-zinc-400">
-          No upcoming Cavaliers game scheduled
+          No upcoming games
         </p>
       </div>
     );
@@ -131,6 +132,9 @@ export default function GameCard({
   const spreadDisplay =
     game.spread > 0 ? `+${game.spread}` : `${game.spread}`;
 
+  const awayTeam = cavsHome ? opponent : CAVALIERS;
+  const homeTeam = cavsHome ? CAVALIERS : opponent;
+
   return (
     <div className="animate-fade-in overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
       {/* Top accent bar */}
@@ -141,17 +145,9 @@ export default function GameCard({
         <div className="flex items-center justify-center gap-4 sm:gap-8">
           {/* Away team */}
           <div className="flex flex-col items-center gap-2">
-            <div
-              className={`flex h-16 w-16 items-center justify-center rounded-full text-lg font-bold text-white shadow-md transition-transform hover:scale-105 sm:h-20 sm:w-20 sm:text-xl ${
-                !cavsHome
-                  ? "bg-cavs-wine"
-                  : "bg-zinc-400 dark:bg-zinc-600"
-              }`}
-            >
-              {teamAbbrev(cavsHome ? opponent : CAVALIERS)}
-            </div>
+            <TeamLogo teamName={awayTeam} isCavs={awayTeam === CAVALIERS} />
             <span className="max-w-[100px] text-center text-xs font-medium text-zinc-600 dark:text-zinc-400 sm:max-w-[120px] sm:text-sm">
-              {cavsHome ? opponent : CAVALIERS}
+              {awayTeam}
             </span>
           </div>
 
@@ -170,17 +166,9 @@ export default function GameCard({
 
           {/* Home team */}
           <div className="flex flex-col items-center gap-2">
-            <div
-              className={`flex h-16 w-16 items-center justify-center rounded-full text-lg font-bold text-white shadow-md transition-transform hover:scale-105 sm:h-20 sm:w-20 sm:text-xl ${
-                cavsHome
-                  ? "bg-cavs-wine"
-                  : "bg-zinc-400 dark:bg-zinc-600"
-              }`}
-            >
-              {teamAbbrev(cavsHome ? CAVALIERS : opponent)}
-            </div>
+            <TeamLogo teamName={homeTeam} isCavs={homeTeam === CAVALIERS} />
             <span className="max-w-[100px] text-center text-xs font-medium text-zinc-600 dark:text-zinc-400 sm:max-w-[120px] sm:text-sm">
-              {cavsHome ? CAVALIERS : opponent}
+              {homeTeam}
             </span>
           </div>
         </div>

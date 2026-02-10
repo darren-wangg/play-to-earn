@@ -37,14 +37,14 @@ export default function Home() {
         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3 sm:px-6 sm:py-4">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-cavs-wine text-sm font-bold text-white shadow-sm sm:h-10 sm:w-10 sm:text-base">
-              UR
+              CLE
             </div>
             <div>
               <h1 className="text-lg font-bold leading-tight text-zinc-900 dark:text-zinc-50 sm:text-xl">
-                Uptop Rain
+                Cavaliers
               </h1>
               <p className="hidden text-xs text-zinc-400 sm:block">
-                Cavaliers Play-to-Earn
+                Play-to-Earn
               </p>
             </div>
           </div>
