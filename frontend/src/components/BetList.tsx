@@ -144,12 +144,21 @@ export default function BetList({ refreshKey }: { refreshKey: number }) {
                     {pickedTeam}
                   </span>
                   {" "}({game.spread > 0 ? "+" : ""}{game.spread})
-                  {hasScore && (
-                    <span className="ml-2 text-zinc-400">
-                      Final: {game.finalHomeScore}-{game.finalAwayScore}
-                    </span>
-                  )}
                 </p>
+                {hasScore && (
+                  <div className="mt-2 flex items-center gap-2 rounded-md bg-zinc-50 px-3 py-1.5 dark:bg-zinc-800">
+                    <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Final Score:</span>
+                    <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                      {game.homeTeam === CAVALIERS ? "CLE" : game.homeTeam.split(" ").pop()}{" "}
+                      {game.finalHomeScore}
+                    </span>
+                    <span className="text-xs text-zinc-400">-</span>
+                    <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                      {game.awayTeam === CAVALIERS ? "CLE" : game.awayTeam.split(" ").pop()}{" "}
+                      {game.finalAwayScore}
+                    </span>
+                  </div>
+                )}
               </div>
               <span
                 className={`inline-flex w-fit shrink-0 items-center rounded-full px-3 py-1 text-xs font-semibold ${cfg.bg} ${cfg.text}`}
