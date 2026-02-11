@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import { getTeam } from "@/constants/nba-teams";
 
@@ -12,64 +12,63 @@ interface Game {
   startTime: string;
   spread: number;
   status: string;
-  message?: string;
 }
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
 const CAVALIERS = "Cleveland Cavaliers";
 
-function formatGameTime(iso: string) {
+function computeCountdown(iso: string) {
   const d = new Date(iso);
   const now = new Date();
   const diffMs = d.getTime() - now.getTime();
   const diffH = Math.floor(diffMs / 3600000);
   const diffM = Math.floor((diffMs % 3600000) / 60000);
 
+  if (diffMs < 0) return "Started";
+  if (diffH >= 24) {
+    const days = Math.floor(diffH / 24);
+    return `${days}d ${diffH % 24}h`;
+  }
+  if (diffH > 0) return `${diffH}h ${diffM}m`;
+  return `${diffM}m`;
+}
+
+function formatGameTime(iso: string) {
+  const d = new Date(iso);
+
   const timeStr = d.toLocaleTimeString("en-US", {
     hour: "numeric",
     minute: "2-digit",
+    timeZoneName: "short",
   });
   const dateStr = d.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
+    month: "long",
     day: "numeric",
   });
 
-  if (diffMs < 0) return { dateStr, timeStr, countdown: "Started" };
-  if (diffH > 24) return { dateStr, timeStr, countdown: `${Math.floor(diffH / 24)}d ${diffH % 24}h` };
-  if (diffH > 0) return { dateStr, timeStr, countdown: `${diffH}h ${diffM}m` };
-  return { dateStr, timeStr, countdown: `${diffM}m` };
+  return { dateStr, timeStr };
 }
 
-function TeamLogo({ teamName, isCavs }: { teamName: string; isCavs: boolean }) {
+function TeamLogo({ teamName }: { teamName: string }) {
   const team = getTeam(teamName);
 
   if (team.logo) {
     return (
-      <div
-        className={`flex h-16 w-16 items-center justify-center rounded-full shadow-md transition-transform hover:scale-105 sm:h-20 sm:w-20 ${
-          isCavs
-            ? "bg-cavs-wine/10 ring-2 ring-cavs-wine dark:bg-cavs-wine/20 dark:ring-cavs-gold"
-            : "bg-zinc-100 dark:bg-zinc-800"
-        }`}
-      >
-        <Image
-          src={team.logo}
-          alt={team.name}
-          width={56}
-          height={56}
-          className="h-10 w-10 object-contain sm:h-14 sm:w-14"
-          unoptimized
-        />
-      </div>
+      <Image
+        src={team.logo}
+        alt={team.name}
+        width={80}
+        height={80}
+        className="h-20 w-20 object-contain drop-shadow-lg sm:h-24 sm:w-24"
+        unoptimized
+      />
     );
   }
 
   return (
     <div
-      className={`flex h-16 w-16 items-center justify-center rounded-full text-lg font-bold text-white shadow-md transition-transform hover:scale-105 sm:h-20 sm:w-20 sm:text-xl ${
-        isCavs ? "bg-cavs-wine" : "bg-zinc-400 dark:bg-zinc-600"
-      }`}
+      className="flex h-20 w-20 items-center justify-center rounded-full text-xl font-bold text-white sm:h-24 sm:w-24"
+      style={{ backgroundColor: team.primaryColor }}
     >
       {team.abbrev}
     </div>
@@ -83,6 +82,7 @@ export default function GameCard({
 }) {
   const [game, setGame] = useState<Game | null>(null);
   const [loading, setLoading] = useState(true);
+  const [countdown, setCountdown] = useState("");
 
   useEffect(() => {
     fetch(`${BACKEND}/games/next`)
@@ -90,6 +90,7 @@ export default function GameCard({
       .then((data: Game) => {
         if (data.gameId) {
           setGame(data);
+          setCountdown(computeCountdown(data.startTime));
           onGameLoaded?.(data);
         } else {
           setGame(null);
@@ -103,13 +104,24 @@ export default function GameCard({
       .finally(() => setLoading(false));
   }, [onGameLoaded]);
 
+  // Live countdown: update every 60 seconds
+  const updateCountdown = useCallback(() => {
+    if (game) setCountdown(computeCountdown(game.startTime));
+  }, [game]);
+
+  useEffect(() => {
+    if (!game) return;
+    const interval = setInterval(updateCountdown, 60000);
+    return () => clearInterval(interval);
+  }, [game, updateCountdown]);
+
   if (loading) {
     return (
-      <div className="animate-pulse rounded-xl border border-zinc-200 bg-white p-8 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="animate-pulse overflow-hidden rounded-2xl bg-zinc-900 p-8">
         <div className="flex items-center justify-center gap-8">
-          <div className="h-16 w-16 rounded-full bg-zinc-200 dark:bg-zinc-700" />
-          <div className="h-6 w-12 rounded bg-zinc-200 dark:bg-zinc-700" />
-          <div className="h-16 w-16 rounded-full bg-zinc-200 dark:bg-zinc-700" />
+          <div className="h-20 w-20 rounded-full bg-zinc-700" />
+          <div className="h-8 w-12 rounded bg-zinc-700" />
+          <div className="h-20 w-20 rounded-full bg-zinc-700" />
         </div>
       </div>
     );
@@ -117,88 +129,101 @@ export default function GameCard({
 
   if (!game) {
     return (
-      <div className="animate-fade-in rounded-xl border border-zinc-200 bg-white p-8 text-center dark:border-zinc-800 dark:bg-zinc-900">
-        <p className="text-lg text-zinc-500 dark:text-zinc-400">
-          No upcoming games
-        </p>
+      <div className="animate-fade-in overflow-hidden rounded-2xl bg-zinc-900 p-8 text-center">
+        <p className="text-lg text-zinc-400">No upcoming games</p>
       </div>
     );
   }
 
-  const opponent =
-    game.homeTeam === CAVALIERS ? game.awayTeam : game.homeTeam;
+  const opponent = game.homeTeam === CAVALIERS ? game.awayTeam : game.homeTeam;
   const cavsHome = game.homeTeam === CAVALIERS;
-  const { dateStr, timeStr, countdown } = formatGameTime(game.startTime);
-  const spreadDisplay =
-    game.spread > 0 ? `+${game.spread}` : `${game.spread}`;
+  const { dateStr, timeStr } = formatGameTime(game.startTime);
+  const spreadDisplay = game.spread > 0 ? `+${game.spread}` : `${game.spread}`;
 
   const awayTeam = cavsHome ? opponent : CAVALIERS;
   const homeTeam = cavsHome ? CAVALIERS : opponent;
+  const awayColor = getTeam(awayTeam).primaryColor;
+  const homeColor = getTeam(homeTeam).primaryColor;
+  const awayAbbrev = getTeam(awayTeam).abbrev;
+  const homeAbbrev = getTeam(homeTeam).abbrev;
+  const homeCity = getTeam(homeTeam).city;
 
   return (
-    <div className="animate-fade-in overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-      {/* Top accent bar */}
-      <div className="h-1.5 bg-gradient-to-r from-cavs-wine via-cavs-gold to-cavs-navy" />
+    <div className="animate-fade-in overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900">
+      {/* Matchup area with team color split */}
+      <div className="relative flex items-stretch">
+        {/* Away team half */}
+        <div
+          className="flex flex-1 flex-col items-center justify-center py-8 sm:py-10"
+          style={{ backgroundColor: awayColor + "30" }}
+        >
+          <TeamLogo teamName={awayTeam} />
+        </div>
 
-      <div className="p-6 sm:p-8">
-        {/* Matchup */}
-        <div className="flex items-center justify-center gap-4 sm:gap-8">
-          {/* Away team */}
-          <div className="flex flex-col items-center gap-2">
-            <TeamLogo teamName={awayTeam} isCavs={awayTeam === CAVALIERS} />
-            <span className="max-w-[100px] text-center text-xs font-medium text-zinc-600 dark:text-zinc-400 sm:max-w-[120px] sm:text-sm">
-              {awayTeam}
-            </span>
-          </div>
-
-          {/* VS / Info */}
-          <div className="flex flex-col items-center gap-1">
-            <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
-              {cavsHome ? "HOME" : "AWAY"}
-            </span>
-            <span className="text-2xl font-bold text-zinc-300 dark:text-zinc-600">
-              @
-            </span>
-            <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
-              {cavsHome ? "AWAY" : "HOME"}
-            </span>
-          </div>
-
-          {/* Home team */}
-          <div className="flex flex-col items-center gap-2">
-            <TeamLogo teamName={homeTeam} isCavs={homeTeam === CAVALIERS} />
-            <span className="max-w-[100px] text-center text-xs font-medium text-zinc-600 dark:text-zinc-400 sm:max-w-[120px] sm:text-sm">
-              {homeTeam}
-            </span>
+        {/* VS badge */}
+        <div className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-900 text-sm font-bold text-white shadow-lg ring-2 ring-zinc-700 sm:h-12 sm:w-12 sm:text-base">
+            VS
           </div>
         </div>
 
-        {/* Game details */}
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-3 sm:gap-6">
-          <div className="flex items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1.5 dark:bg-zinc-800">
-            <svg className="h-4 w-4 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        {/* Home team half */}
+        <div
+          className="flex flex-1 flex-col items-center justify-center py-8 sm:py-10"
+          style={{ backgroundColor: homeColor + "30" }}
+        >
+          <TeamLogo teamName={homeTeam} />
+        </div>
+      </div>
+
+      {/* Game info section */}
+      <div className="px-5 pb-5 pt-4 sm:px-6 sm:pb-6">
+        {/* Matchup title */}
+        <h3 className="text-base font-bold uppercase tracking-wide text-white sm:text-lg">
+          {awayAbbrev} vs {homeAbbrev}
+        </h3>
+
+        {/* Details row */}
+        <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-zinc-400">
+          <span className="flex items-center gap-1.5">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <span className="text-xs font-medium text-zinc-600 dark:text-zinc-300">
-              {dateStr}
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1.5 dark:bg-zinc-800">
-            <svg className="h-4 w-4 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            {dateStr}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span className="text-xs font-medium text-zinc-600 dark:text-zinc-300">
-              {timeStr}
+            {timeStr}
+          </span>
+          {homeCity && (
+            <span className="flex items-center gap-1.5">
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              {homeCity}
+            </span>
+          )}
+        </div>
+
+        {/* Bottom pills */}
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1.5 rounded-full border border-zinc-700 bg-zinc-800 px-3 py-1.5">
+            <svg className="h-3.5 w-3.5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-xs font-semibold text-white">{countdown}</span>
+          </div>
+          <div className="rounded-full bg-cavs-wine px-4 py-1.5">
+            <span className="text-xs font-bold text-white">
+              Spread: CLE {spreadDisplay}
             </span>
           </div>
-          <div className="rounded-full bg-cavs-wine/10 px-3 py-1.5">
-            <span className="text-xs font-bold text-cavs-wine dark:text-cavs-gold">
-              Spread: {spreadDisplay}
-            </span>
-          </div>
-          <div className="rounded-full bg-cavs-gold/20 px-3 py-1.5">
-            <span className="text-xs font-bold text-cavs-navy dark:text-cavs-gold">
-              {countdown}
+          <div className="rounded-full bg-cavs-gold/20 px-4 py-1.5">
+            <span className="text-xs font-bold text-cavs-gold">
+              Win +100 points
             </span>
           </div>
         </div>

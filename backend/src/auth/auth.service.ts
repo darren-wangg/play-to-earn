@@ -33,11 +33,10 @@ export class AuthService {
     const existing = await this.userModel.findOne({ email });
 
     if (existing) {
-      // If user already has a password, reject duplicate registration
       if (existing.authProviders.includes('credentials')) {
         throw new ConflictException('An account with this email already exists');
       }
-      // Google-only user — link by adding password
+      // Google-only user linking a password
       existing.passwordHash = await bcrypt.hash(password, 10);
       existing.authProviders.push('credentials');
       await existing.save();

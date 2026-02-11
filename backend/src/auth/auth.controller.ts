@@ -2,6 +2,7 @@ import { Body, Controller, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { GoogleAuthDto } from './dto/google-auth.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -26,8 +27,8 @@ export class AuthController {
   }
 
   @Post('google')
-  async googleSignIn(@Body('email') email: string) {
-    const user = await this.authService.findOrCreateUser(email, 'google');
+  async googleSignIn(@Body() dto: GoogleAuthDto) {
+    const user = await this.authService.findOrCreateUser(dto.email, 'google');
     return { email: user.email, id: user._id };
   }
 }

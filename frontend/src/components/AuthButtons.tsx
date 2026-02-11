@@ -17,7 +17,7 @@ export default function AuthButtons() {
         </span>
         <button
           onClick={() => signOut()}
-          className="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+          className="cursor-pointer rounded-lg border border-cavs-wine/20 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 transition-all hover:bg-cavs-wine/10 hover:scale-105 active:scale-95 dark:border-cavs-wine/30 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-cavs-wine/20"
         >
           Sign Out
         </button>
@@ -28,7 +28,7 @@ export default function AuthButtons() {
   return (
     <button
       onClick={() => signIn()}
-      className="rounded-lg bg-cavs-wine px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-cavs-wine-light hover:shadow-md active:scale-[0.98] dark:bg-cavs-gold dark:text-cavs-navy dark:hover:bg-amber-400 cursor-pointer"
+      className="cursor-pointer rounded-lg bg-cavs-wine px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-cavs-wine-light hover:shadow-md hover:scale-105 active:scale-95 dark:bg-cavs-gold dark:text-cavs-navy dark:hover:bg-amber-400"
     >
       Sign In
     </button>

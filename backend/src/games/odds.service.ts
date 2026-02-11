@@ -52,14 +52,24 @@ export class OddsService {
       return null;
     }
 
-    const { data } = await axios.get<OddsGame[]>(url, {
-      params: {
-        apiKey,
-        regions: 'us',
-        markets: 'spreads',
-        oddsFormat: 'american',
-      },
-    });
+    let data: OddsGame[];
+    try {
+      const response = await axios.get<OddsGame[]>(url, {
+        params: {
+          apiKey,
+          regions: 'us',
+          markets: 'spreads',
+          oddsFormat: 'american',
+        },
+      });
+      data = response.data;
+    } catch (error) {
+      this.logger.error(
+        'Failed to fetch from Odds API',
+        error instanceof Error ? error.message : String(error),
+      );
+      return null;
+    }
 
     // Filter for Cavaliers games
     const cavsGames = data.filter(

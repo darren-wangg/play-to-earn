@@ -27,14 +27,12 @@ export class SettleService {
       throw new BadRequestException('Game has already been settled');
     }
 
-    // Update game with final scores
     game.finalHomeScore = dto.finalHomeScore;
     game.finalAwayScore = dto.finalAwayScore;
     game.status = 'finished';
     await game.save();
 
-    // Settlement logic: spread is relative to Cavaliers
-    // Compute margin from Cavaliers' perspective (Cavs may be home or away)
+    // Spread is relative to Cavaliers — compute margin from Cavs' perspective
     const CAVALIERS = 'Cleveland Cavaliers';
     const cavsAreHome = game.homeTeam === CAVALIERS;
     const cavsMargin = cavsAreHome
@@ -42,7 +40,6 @@ export class SettleService {
       : dto.finalAwayScore - dto.finalHomeScore;
     const adjustedMargin = cavsMargin + game.spread;
 
-    // Find all pending bets for this game
     const bets = await this.betModel.find({
       gameId: game._id,
       status: 'pending',
