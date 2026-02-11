@@ -22,6 +22,47 @@ interface SettleResponse {
   message?: string;
 }
 
+function HealthDetails({ health }: { health: Record<string, unknown> }) {
+  // Terminus puts healthy checks in `details`, failed ones in `error`
+  const allDetails = {
+    ...((health.details ?? {}) as Record<string, { status?: string; message?: string }>),
+    ...((typeof health.error === "object" && health.error !== null ? health.error : {}) as Record<string, { status?: string; message?: string }>),
+  };
+  const entries = Object.entries(allDetails);
+
+  if (entries.length === 0 && health.status !== "ok") {
+    return (
+      <div className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-900/20 dark:text-red-400">
+        {health.message ? String(health.message) : "Unknown error — check backend logs"}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {entries.map(([name, detail]) => {
+        const isUp = detail?.status === "up";
+        return (
+          <div
+            key={name}
+            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${
+              isUp
+                ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
+                : "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400"
+            }`}
+          >
+            <span className={`h-2 w-2 rounded-full ${isUp ? "bg-green-500" : "bg-red-500"}`} />
+            <span>{name}</span>
+            {!isUp && detail?.message && (
+              <span className="text-xs opacity-70">— {detail.message}</span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function AdminPage() {
   const [apiKey, setApiKey] = useState("");
   const [fetchLoading, setFetchLoading] = useState(false);
@@ -170,44 +211,7 @@ export default function AdminPage() {
               </div>
 
               {/* Per-service details */}
-              {(() => {
-                // Terminus puts healthy checks in `details`, failed ones in `error`
-                const allDetails = {
-                  ...((health.details ?? {}) as Record<string, { status?: string; message?: string }>),
-                  ...((typeof health.error === "object" && health.error !== null ? health.error : {}) as Record<string, { status?: string; message?: string }>),
-                };
-                const entries = Object.entries(allDetails);
-                if (entries.length === 0 && health.status !== "ok") {
-                  return (
-                    <div className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-900/20 dark:text-red-400">
-                      {health.message ? String(health.message) : "Unknown error — check backend logs"}
-                    </div>
-                  );
-                }
-                return (
-                  <div className="flex flex-wrap gap-2">
-                    {entries.map(([name, detail]) => {
-                      const isUp = detail?.status === "up";
-                      return (
-                        <div
-                          key={name}
-                          className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${
-                            isUp
-                              ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
-                              : "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400"
-                          }`}
-                        >
-                          <span className={`h-2 w-2 rounded-full ${isUp ? "bg-green-500" : "bg-red-500"}`} />
-                          <span>{name}</span>
-                          {!isUp && detail?.message && (
-                            <span className="text-xs opacity-70">— {detail.message}</span>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })()}
+              <HealthDetails health={health} />
             </div>
           ) : null}
         </div>

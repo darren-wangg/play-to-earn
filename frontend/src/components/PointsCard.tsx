@@ -25,18 +25,33 @@ export default function PointsCard({ refreshKey }: { refreshKey: number }) {
       .finally(() => setLoading(false));
   }, [session?.accessToken, refreshKey]);
 
-  if (!session) return null;
+  if (!session) {
+    return (
+      <div className="animate-fade-in rounded-xl border border-dashed border-cavs-wine/25 bg-cavs-wine/5 p-6 text-center dark:border-cavs-wine/30 dark:bg-zinc-900">
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          Sign in to track your points
+        </p>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
-      <div className="animate-pulse rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="h-6 w-24 rounded bg-zinc-200 dark:bg-zinc-700" />
+      <div className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="h-3 w-20 animate-pulse rounded bg-zinc-200 dark:bg-zinc-700" />
+            <div className="mt-2 h-8 w-16 animate-pulse rounded bg-zinc-200 dark:bg-zinc-700" />
+          </div>
+          <div className="h-12 w-12 animate-pulse rounded-full bg-zinc-200 dark:bg-zinc-700" />
+        </div>
+        <div className="mt-3 h-3 w-48 animate-pulse rounded bg-zinc-100 dark:bg-zinc-800" />
       </div>
     );
   }
 
   return (
-    <div className="animate-fade-in rounded-xl border border-cavs-wine/20 bg-white p-5 dark:border-cavs-wine/30 dark:bg-zinc-900">
+    <div className="animate-fade-in rounded-xl border border-cavs-wine/20 bg-white p-5 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 dark:border-cavs-wine/30 dark:bg-zinc-900">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">

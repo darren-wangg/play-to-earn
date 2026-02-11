@@ -9,6 +9,7 @@ import { Game, GameDocument } from '../schemas/game.schema';
 import { Bet, BetDocument } from '../schemas/bet.schema';
 import { User, UserDocument } from '../schemas/user.schema';
 import { SettleGameDto } from './dto/settle-game.dto';
+import { GamesService } from './games.service';
 
 @Injectable()
 export class SettleService {
@@ -16,8 +17,13 @@ export class SettleService {
     @InjectModel(Game.name) private gameModel: Model<GameDocument>,
     @InjectModel(Bet.name) private betModel: Model<BetDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
+    private gamesService: GamesService,
   ) {}
 
+  /**
+   * Settles a game: records final scores, computes adjusted margin (Cavs margin + spread),
+   * and updates all pending bets to won/lost/push. Awards 100 points per winning bet.
+   */
   async settle(gameId: string, dto: SettleGameDto) {
     const game = await this.gameModel.findOne({ gameId });
     if (!game) {
@@ -31,6 +37,9 @@ export class SettleService {
     game.finalAwayScore = dto.finalAwayScore;
     game.status = 'finished';
     await game.save();
+
+    // Invalidate cached "next game" so stale data isn't served
+    this.gamesService.clearCache();
 
     // Spread is relative to Cavaliers — compute margin from Cavs' perspective
     const CAVALIERS = 'Cleveland Cavaliers';

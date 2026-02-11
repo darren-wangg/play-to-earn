@@ -2,6 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { useEffect, useState, useCallback } from "react";
+import { getTeam } from "@/constants/nba-teams";
 
 interface BetGame {
   _id: string;
@@ -126,15 +127,15 @@ export default function BetList({ refreshKey }: { refreshKey: number }) {
         return (
           <div
             key={bet._id}
-            className="rounded-xl border border-cavs-wine/15 bg-white p-4 transition-shadow hover:shadow-md dark:border-cavs-wine/20 dark:bg-zinc-900 sm:p-5"
+            className="rounded-xl border border-cavs-wine/15 bg-white p-4 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 dark:border-cavs-wine/20 dark:bg-zinc-900 sm:p-5"
           >
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                    {game.homeTeam === CAVALIERS ? "CLE" : opponent.slice(0, 3).toUpperCase()}{" "}
+                    {getTeam(game.homeTeam).abbrev}{" "}
                     vs{" "}
-                    {game.homeTeam !== CAVALIERS ? "CLE" : opponent.slice(0, 3).toUpperCase()}
+                    {getTeam(game.awayTeam).abbrev}
                   </span>
                   <span className="text-xs text-zinc-400">{gameDate}</span>
                 </div>

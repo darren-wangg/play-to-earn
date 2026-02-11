@@ -46,7 +46,7 @@ export class CronService {
 
   /**
    * Auto-settle completed games by polling the Scores API.
-   * Default: every 4 hours.
+   * Default: every 3 hours.
    * Skips if no unsettled games exist in DB.
    */
   @Cron(CronExpression.EVERY_3_HOURS)

@@ -140,7 +140,7 @@ export default function BetForm({
   };
 
   return (
-    <div className="animate-fade-in rounded-xl border border-cavs-wine/20 bg-white dark:border-cavs-wine/30 dark:bg-zinc-900">
+    <div className="animate-fade-in rounded-xl border border-cavs-wine/20 bg-white transition-shadow duration-200 hover:shadow-md dark:border-cavs-wine/30 dark:bg-zinc-900">
       <div className="border-b border-cavs-wine/10 px-6 py-4 dark:border-cavs-wine/20">
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-semibold uppercase tracking-wider text-cavs-wine dark:text-cavs-gold">

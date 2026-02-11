@@ -53,7 +53,7 @@ export default function JerseyPicker() {
 
       {/* Popover */}
       {open && (
-        <div className="absolute left-0 top-full z-50 mt-2 w-56 animate-fade-in overflow-hidden rounded-xl border border-cavs-wine/20 bg-white shadow-xl dark:border-cavs-wine/30 dark:bg-zinc-800">
+        <div className="absolute left-0 top-full z-50 mt-2 w-56 animate-fade-in-scale overflow-hidden rounded-xl border border-cavs-wine/20 bg-white shadow-xl dark:border-cavs-wine/30 dark:bg-zinc-800">
           {/* Header */}
           <div className="border-b border-zinc-100 px-3 py-2 dark:border-zinc-700">
             <div className="flex items-center justify-between">
