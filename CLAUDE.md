@@ -82,7 +82,7 @@ Picked "opponent":  adjustedMargin < 0 = won (+100pts), > 0 = lost, === 0 = push
 - [x] Phase 5: Settlement
 - [x] Phase 6: Frontend UI
 - [x] Phase 7: Polish & Edge Cases
-- [ ] Phase 8: Documentation
+- [x] Phase 8: Documentation
 - [ ] Phase 9: Bonus Features
 - [ ] Phase 10: Testing: Unit Tests + Basic e2e Tests
 
