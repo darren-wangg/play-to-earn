@@ -18,7 +18,7 @@ export class CronService {
 
   /**
    * Refresh odds from The Odds API.
-   * Default: every 4 hours (safe for 500 req/month free tier).
+   * Default: every 3 hours (safe for 500 req/month free tier).
    * Skips if no upcoming game or if odds were recently fetched.
    */
   @Cron(CronExpression.EVERY_3_HOURS)
