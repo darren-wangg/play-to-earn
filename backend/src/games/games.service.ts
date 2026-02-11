@@ -4,14 +4,31 @@ import { Model } from 'mongoose';
 import { Game, GameDocument } from '../schemas/game.schema';
 import { ParsedCavsGame } from './odds.service';
 
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 @Injectable()
 export class GamesService {
-  constructor(@InjectModel(Game.name) private gameModel: Model<GameDocument>) {}
+  private cache: { data: GameDocument; expiresAt: number } | null = null;
+
+  constructor(
+    @InjectModel(Game.name) private gameModel: Model<GameDocument>,
+  ) {}
 
   async getNextGame(): Promise<GameDocument | null> {
-    return this.gameModel
+    if (this.cache && Date.now() < this.cache.expiresAt) {
+      return this.cache.data;
+    }
+
+    const game = await this.gameModel
       .findOne({ status: 'upcoming', startTime: { $gte: new Date() } })
-      .sort({ startTime: 1 });
+      .sort({ startTime: 1 })
+      .lean<GameDocument>();
+
+    if (game) {
+      this.cache = { data: game, expiresAt: Date.now() + CACHE_TTL };
+    }
+
+    return game;
   }
 
   async findByGameId(gameId: string): Promise<GameDocument | null> {
@@ -19,7 +36,7 @@ export class GamesService {
   }
 
   async upsertGame(parsed: ParsedCavsGame): Promise<GameDocument> {
-    return this.gameModel.findOneAndUpdate(
+    const game = await this.gameModel.findOneAndUpdate(
       { gameId: parsed.gameId },
       {
         $set: {
@@ -32,5 +49,14 @@ export class GamesService {
       },
       { upsert: true, new: true },
     );
+
+    // Invalidate cache on upsert
+    this.cache = null;
+
+    return game;
+  }
+
+  clearCache(): void {
+    this.cache = null;
   }
 }

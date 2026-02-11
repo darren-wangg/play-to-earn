@@ -1,3 +1,4 @@
+import { HttpException } from '@nestjs/common';
 import { GamesController } from './games.controller';
 
 describe('GamesController', () => {
@@ -7,7 +8,7 @@ describe('GamesController', () => {
   let settleService: any;
 
   beforeEach(() => {
-    gamesService = { getNextGame: jest.fn() };
+    gamesService = { getNextGame: jest.fn(), upsertGame: jest.fn() };
     oddsService = { fetchNextCavsGame: jest.fn() };
     settleService = { settle: jest.fn() };
     controller = new GamesController(gamesService, oddsService, settleService);
@@ -33,6 +34,57 @@ describe('GamesController', () => {
 
       const result = await controller.getNextGame();
       expect(result).toEqual({ message: 'No upcoming Cavaliers game found' });
+    });
+  });
+
+  describe('fetchAndStoreNextGame', () => {
+    it('should throw 404 when odds API returns null', async () => {
+      oddsService.fetchNextCavsGame.mockResolvedValue(null);
+
+      await expect(controller.fetchAndStoreNextGame()).rejects.toThrow(
+        HttpException,
+      );
+    });
+
+    it('should upsert game from fresh odds data', async () => {
+      const parsed = {
+        gameId: 'abc123',
+        homeTeam: 'Cleveland Cavaliers',
+        awayTeam: 'Miami Heat',
+        startTime: new Date(),
+        spread: -4.5,
+      };
+      const savedGame = { ...parsed, toObject: () => parsed };
+      oddsService.fetchNextCavsGame.mockResolvedValue({
+        game: parsed,
+        staleWarning: false,
+      });
+      gamesService.upsertGame.mockResolvedValue(savedGame);
+
+      const result = await controller.fetchAndStoreNextGame();
+      expect(gamesService.upsertGame).toHaveBeenCalledWith(parsed);
+      expect(result).toEqual(savedGame);
+    });
+
+    it('should include staleWarning when odds API fell back', async () => {
+      const parsed = {
+        gameId: 'abc123',
+        homeTeam: 'Cleveland Cavaliers',
+        awayTeam: 'Miami Heat',
+        startTime: new Date(),
+        spread: -4.5,
+      };
+      oddsService.fetchNextCavsGame.mockResolvedValue({
+        game: parsed,
+        staleWarning: true,
+      });
+      gamesService.upsertGame.mockResolvedValue({
+        ...parsed,
+        toObject: () => parsed,
+      });
+
+      const result = await controller.fetchAndStoreNextGame();
+      expect(result).toEqual({ ...parsed, staleWarning: true });
     });
   });
 

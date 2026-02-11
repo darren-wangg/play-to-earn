@@ -1,6 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import axios from 'axios';
+import axiosRetry from 'axios-retry';
+import { Game, GameDocument } from '../schemas/game.schema';
 
 interface OddsOutcome {
   name: string;
@@ -36,15 +40,38 @@ export interface ParsedCavsGame {
   spread: number;
 }
 
+export interface FetchResult {
+  game: ParsedCavsGame;
+  staleWarning: boolean;
+}
+
 const CAVALIERS = 'Cleveland Cavaliers';
 
 @Injectable()
 export class OddsService {
   private readonly logger = new Logger(OddsService.name);
+  private readonly client = axios.create();
 
-  constructor(private configService: ConfigService) {}
+  // Circuit breaker state
+  private circuitOpen = false;
+  private circuitOpenedAt = 0;
+  private readonly circuitCooldown = 30_000; // 30s before retrying
 
-  async fetchNextCavsGame(): Promise<ParsedCavsGame | null> {
+  constructor(
+    private configService: ConfigService,
+    @InjectModel(Game.name) private gameModel: Model<GameDocument>,
+  ) {
+    // Configure axios-retry: 3 attempts with exponential backoff (1s, 2s, 4s)
+    axiosRetry(this.client, {
+      retries: 3,
+      retryDelay: (retryCount) => retryCount * 1000 * Math.pow(2, retryCount - 1),
+      retryCondition: (error) =>
+        axiosRetry.isNetworkOrIdempotentRequestError(error) ||
+        (error.response?.status ?? 0) >= 500,
+    });
+  }
+
+  async fetchNextCavsGame(): Promise<FetchResult | null> {
     const apiKey = this.configService.get<string>('ODDS_API_KEY');
     const url = this.configService.get<string>('ODDS_API_ENDPOINT');
     if (!apiKey || !url) {
@@ -52,26 +79,47 @@ export class OddsService {
       return null;
     }
 
-    let data: OddsGame[];
+    // Circuit breaker: skip API call if circuit is open and cooldown hasn't elapsed
+    if (this.circuitOpen) {
+      if (Date.now() - this.circuitOpenedAt < this.circuitCooldown) {
+        this.logger.warn('Circuit breaker open — returning stale data');
+        return this.getFallback();
+      }
+      this.circuitOpen = false;
+    }
+
     try {
-      const response = await axios.get<OddsGame[]>(url, {
+      const response = await this.client.get<OddsGame[]>(url, {
         params: {
           apiKey,
           regions: 'us',
           markets: 'spreads',
           oddsFormat: 'american',
         },
+        timeout: 10_000,
       });
-      data = response.data;
+
+      const parsed = this.parseResponse(response.data);
+      if (!parsed) return null;
+
+      // Reset circuit breaker on success
+      this.circuitOpen = false;
+      return { game: parsed, staleWarning: false };
     } catch (error) {
       this.logger.error(
-        'Failed to fetch from Odds API',
+        'Odds API failed after retries',
         error instanceof Error ? error.message : String(error),
       );
-      return null;
-    }
 
-    // Filter for Cavaliers games
+      // Open circuit breaker
+      this.circuitOpen = true;
+      this.circuitOpenedAt = Date.now();
+
+      return this.getFallback();
+    }
+  }
+
+  private parseResponse(data: OddsGame[]): ParsedCavsGame | null {
     const cavsGames = data.filter(
       (g) => g.home_team === CAVALIERS || g.away_team === CAVALIERS,
     );
@@ -81,7 +129,6 @@ export class OddsService {
       return null;
     }
 
-    // Pick earliest game
     cavsGames.sort(
       (a, b) =>
         new Date(a.commence_time).getTime() -
@@ -89,7 +136,6 @@ export class OddsService {
     );
     const game = cavsGames[0];
 
-    // Extract spread relative to Cavaliers
     const spreadsMarket = game.bookmakers[0]?.markets.find(
       (m) => m.key === 'spreads',
     );
@@ -113,5 +159,28 @@ export class OddsService {
       startTime: new Date(game.commence_time),
       spread: cavsOutcome.point,
     };
+  }
+
+  private async getFallback(): Promise<FetchResult | null> {
+    const staleGame = await this.gameModel
+      .findOne({ status: 'upcoming' })
+      .sort({ startTime: -1 })
+      .lean();
+
+    if (staleGame) {
+      this.logger.warn('Returning stale game data as fallback');
+      return {
+        game: {
+          gameId: staleGame.gameId,
+          homeTeam: staleGame.homeTeam,
+          awayTeam: staleGame.awayTeam,
+          startTime: staleGame.startTime,
+          spread: staleGame.spread,
+        },
+        staleWarning: true,
+      };
+    }
+
+    return null;
   }
 }
