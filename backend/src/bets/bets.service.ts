@@ -48,6 +48,7 @@ export class BetsService {
     return this.betModel
       .find({ userId: new Types.ObjectId(userId) })
       .populate('gameId')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
   }
 }

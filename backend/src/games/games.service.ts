@@ -32,7 +32,7 @@ export class GamesService {
   }
 
   async findByGameId(gameId: string): Promise<GameDocument | null> {
-    return this.gameModel.findOne({ gameId });
+    return this.gameModel.findOne({ gameId }).lean();
   }
 
   async upsertGame(parsed: ParsedCavsGame): Promise<GameDocument> {

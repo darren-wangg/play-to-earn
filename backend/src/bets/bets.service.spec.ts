@@ -97,7 +97,9 @@ describe('BetsService', () => {
       const mockBets = [{ _id: 'bet-1' }, { _id: 'bet-2' }];
       betModel.find.mockReturnValue({
         populate: jest.fn().mockReturnValue({
-          sort: jest.fn().mockResolvedValue(mockBets),
+          sort: jest.fn().mockReturnValue({
+            lean: jest.fn().mockResolvedValue(mockBets),
+          }),
         }),
       });
 
