@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
@@ -35,6 +35,17 @@ export default function AdminPage() {
 
   const [currentGame, setCurrentGame] = useState<GameResponse | null>(null);
   const [viewLoading, setViewLoading] = useState(false);
+
+  const [health, setHealth] = useState<Record<string, unknown> | null>(null);
+  const [healthLoading, setHealthLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`${BACKEND}/health`)
+      .then((r) => r.json().catch(() => ({ status: "error", error: `HTTP ${r.status}` })))
+      .then(setHealth)
+      .catch(() => setHealth({ status: "error", error: "Backend unreachable" }))
+      .finally(() => setHealthLoading(false));
+  }, []);
 
   const handleFetchGame = async () => {
     if (!apiKey.trim()) {
@@ -134,6 +145,73 @@ export default function AdminPage() {
       </header>
 
       <main className="mx-auto w-full max-w-3xl flex-1 space-y-6 px-4 py-6 sm:px-6 sm:py-8">
+        {/* System Health */}
+        <div className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-900 dark:text-zinc-100">
+            System Health
+          </h2>
+          {healthLoading ? (
+            <div className="mt-3 flex items-center gap-2 text-sm text-zinc-400">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-600" />
+              Checking...
+            </div>
+          ) : health ? (
+            <div className="mt-3 space-y-3">
+              {/* Overall status */}
+              <div className={`flex items-center gap-2 text-sm font-semibold ${
+                health.status === "ok"
+                  ? "text-green-700 dark:text-green-400"
+                  : "text-red-700 dark:text-red-400"
+              }`}>
+                <span className={`h-2.5 w-2.5 rounded-full ${
+                  health.status === "ok" ? "bg-green-500" : "bg-red-500"
+                }`} />
+                {health.status === "ok" ? "All systems operational" : "Service degraded"}
+              </div>
+
+              {/* Per-service details */}
+              {(() => {
+                // Terminus puts healthy checks in `details`, failed ones in `error`
+                const allDetails = {
+                  ...((health.details ?? {}) as Record<string, { status?: string; message?: string }>),
+                  ...((typeof health.error === "object" && health.error !== null ? health.error : {}) as Record<string, { status?: string; message?: string }>),
+                };
+                const entries = Object.entries(allDetails);
+                if (entries.length === 0 && health.status !== "ok") {
+                  return (
+                    <div className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-900/20 dark:text-red-400">
+                      {health.message ? String(health.message) : "Unknown error — check backend logs"}
+                    </div>
+                  );
+                }
+                return (
+                  <div className="flex flex-wrap gap-2">
+                    {entries.map(([name, detail]) => {
+                      const isUp = detail?.status === "up";
+                      return (
+                        <div
+                          key={name}
+                          className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${
+                            isUp
+                              ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
+                              : "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400"
+                          }`}
+                        >
+                          <span className={`h-2 w-2 rounded-full ${isUp ? "bg-green-500" : "bg-red-500"}`} />
+                          <span>{name}</span>
+                          {!isUp && detail?.message && (
+                            <span className="text-xs opacity-70">— {detail.message}</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+            </div>
+          ) : null}
+        </div>
+
         {/* API Key */}
         <div className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
           <label className="block text-sm font-semibold text-zinc-900 dark:text-zinc-100">
