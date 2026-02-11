@@ -45,6 +45,7 @@ export class GamesService {
           startTime: parsed.startTime,
           spread: parsed.spread,
           status: 'upcoming',
+          lastOddsFetchedAt: new Date(),
         },
       },
       { upsert: true, new: true },
@@ -54,6 +55,12 @@ export class GamesService {
     this.cache = null;
 
     return game;
+  }
+
+  async findUnsettledGames(): Promise<GameDocument[]> {
+    return this.gameModel
+      .find({ status: 'upcoming', startTime: { $lt: new Date() } })
+      .lean();
   }
 
   clearCache(): void {

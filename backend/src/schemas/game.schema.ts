@@ -28,6 +28,9 @@ export class Game {
 
   @Prop()
   finalAwayScore?: number;
+
+  @Prop()
+  lastOddsFetchedAt?: Date;
 }
 
 export const GameSchema = SchemaFactory.createForClass(Game);
