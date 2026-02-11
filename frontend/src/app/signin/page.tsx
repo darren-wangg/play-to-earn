@@ -3,6 +3,7 @@
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 
 export default function SignInPage() {
   const [email, setEmail] = useState("");
@@ -26,6 +27,7 @@ export default function SignInPage() {
     if (result?.error) {
       setError(result.error);
     } else {
+      toast.success("Signed in successfully!");
       window.location.href = "/";
     }
   };
@@ -94,7 +96,7 @@ export default function SignInPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-lg bg-cavs-wine py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-cavs-wine-light hover:shadow-md active:scale-[0.98] disabled:opacity-50 dark:bg-cavs-gold dark:text-cavs-navy dark:hover:bg-amber-400 cursor-pointer"
+              className="w-full cursor-pointer rounded-lg bg-cavs-wine py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-cavs-wine-light hover:shadow-md hover:scale-[1.02] active:scale-[0.97] disabled:opacity-50 disabled:hover:scale-100 dark:bg-cavs-gold dark:text-cavs-navy dark:hover:bg-amber-400"
             >
               {loading ? "Signing in..." : "Sign in"}
             </button>
@@ -111,7 +113,7 @@ export default function SignInPage() {
           <button
             type="button"
             onClick={() => signIn("google", { callbackUrl: "/" })}
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-zinc-300 bg-white py-2.5 text-sm font-medium text-zinc-700 shadow-sm transition-all hover:bg-zinc-50 hover:shadow-md active:scale-[0.98] dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 cursor-pointer"
+            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-zinc-300 bg-white py-2.5 text-sm font-medium text-zinc-700 shadow-sm transition-all duration-200 hover:bg-zinc-50 hover:shadow-md hover:scale-[1.02] active:scale-[0.97] dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24">
               <path
