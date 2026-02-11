@@ -57,9 +57,9 @@ function TeamLogo({ teamName }: { teamName: string }) {
       <Image
         src={team.logo}
         alt={team.name}
-        width={80}
-        height={80}
-        className="h-20 w-20 object-contain drop-shadow-lg sm:h-24 sm:w-24"
+        width={112}
+        height={112}
+        className="h-24 w-24 object-contain drop-shadow-lg transition-transform duration-300 hover:scale-110 sm:h-28 sm:w-28"
         unoptimized
       />
     );
@@ -67,7 +67,7 @@ function TeamLogo({ teamName }: { teamName: string }) {
 
   return (
     <div
-      className="flex h-20 w-20 items-center justify-center rounded-full text-xl font-bold text-white sm:h-24 sm:w-24"
+      className="flex h-24 w-24 items-center justify-center rounded-full text-xl font-bold text-white transition-transform duration-300 hover:scale-110 sm:h-28 sm:w-28"
       style={{ backgroundColor: team.primaryColor }}
     >
       {team.abbrev}
@@ -117,11 +117,25 @@ export default function GameCard({
 
   if (loading) {
     return (
-      <div className="animate-pulse overflow-hidden rounded-2xl bg-zinc-900 p-8">
-        <div className="flex items-center justify-center gap-8">
-          <div className="h-20 w-20 rounded-full bg-zinc-700" />
-          <div className="h-8 w-12 rounded bg-zinc-700" />
-          <div className="h-20 w-20 rounded-full bg-zinc-700" />
+      <div className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900">
+        {/* Matchup skeleton — matches real card height */}
+        <div className="flex items-stretch">
+          <div className="flex flex-1 items-center justify-center bg-zinc-800/40 py-10 sm:py-12">
+            <div className="h-24 w-24 animate-pulse rounded-full bg-zinc-700 sm:h-28 sm:w-28" />
+          </div>
+          <div className="flex flex-1 items-center justify-center bg-zinc-800/40 py-10 sm:py-12">
+            <div className="h-24 w-24 animate-pulse rounded-full bg-zinc-700 sm:h-28 sm:w-28" />
+          </div>
+        </div>
+        {/* Info skeleton */}
+        <div className="space-y-3 px-5 pb-5 pt-4 sm:px-6 sm:pb-6">
+          <div className="h-5 w-40 animate-pulse rounded bg-zinc-700" />
+          <div className="h-4 w-60 animate-pulse rounded bg-zinc-800" />
+          <div className="flex gap-3">
+            <div className="h-7 w-20 animate-pulse rounded-full bg-zinc-800" />
+            <div className="h-7 w-28 animate-pulse rounded-full bg-zinc-800" />
+            <div className="h-7 w-24 animate-pulse rounded-full bg-zinc-800" />
+          </div>
         </div>
       </div>
     );
@@ -144,17 +158,17 @@ export default function GameCard({
   const homeTeam = cavsHome ? CAVALIERS : opponent;
   const awayColor = getTeam(awayTeam).primaryColor;
   const homeColor = getTeam(homeTeam).primaryColor;
-  const awayAbbrev = getTeam(awayTeam).abbrev;
-  const homeAbbrev = getTeam(homeTeam).abbrev;
+  const awayName = awayTeam.split(" ").pop()!;
+  const homeName = homeTeam.split(" ").pop()!;
   const homeCity = getTeam(homeTeam).city;
 
   return (
-    <div className="animate-fade-in overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900">
+    <div className="animate-fade-in overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 transition-shadow duration-300 hover:shadow-xl hover:shadow-cavs-wine/10">
       {/* Matchup area with team color split */}
       <div className="relative flex items-stretch">
         {/* Away team half */}
         <div
-          className="flex flex-1 flex-col items-center justify-center py-8 sm:py-10"
+          className="animate-slide-in-left flex flex-1 flex-col items-center justify-center py-10 sm:py-12"
           style={{ backgroundColor: awayColor + "30" }}
         >
           <TeamLogo teamName={awayTeam} />
@@ -162,14 +176,14 @@ export default function GameCard({
 
         {/* VS badge */}
         <div className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-900 text-sm font-bold text-white shadow-lg ring-2 ring-zinc-700 sm:h-12 sm:w-12 sm:text-base">
+          <div className="animate-scale-in flex h-10 w-10 items-center justify-center rounded-full bg-zinc-900 text-sm font-bold text-white shadow-lg ring-2 ring-zinc-700 sm:h-12 sm:w-12 sm:text-base">
             VS
           </div>
         </div>
 
         {/* Home team half */}
         <div
-          className="flex flex-1 flex-col items-center justify-center py-8 sm:py-10"
+          className="animate-slide-in-right flex flex-1 flex-col items-center justify-center py-10 sm:py-12"
           style={{ backgroundColor: homeColor + "30" }}
         >
           <TeamLogo teamName={homeTeam} />
@@ -179,8 +193,8 @@ export default function GameCard({
       {/* Game info section */}
       <div className="px-5 pb-5 pt-4 sm:px-6 sm:pb-6">
         {/* Matchup title */}
-        <h3 className="text-base font-bold uppercase tracking-wide text-white sm:text-lg">
-          {awayAbbrev} vs {homeAbbrev}
+        <h3 className="animate-fade-in text-base font-bold uppercase tracking-wide text-white sm:text-lg">
+          {awayName} vs {homeName}
         </h3>
 
         {/* Details row */}
@@ -191,12 +205,6 @@ export default function GameCard({
             </svg>
             {dateStr}
           </span>
-          <span className="flex items-center gap-1.5">
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            {timeStr}
-          </span>
           {homeCity && (
             <span className="flex items-center gap-1.5">
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -206,23 +214,29 @@ export default function GameCard({
               {homeCity}
             </span>
           )}
+          <span className="flex items-center gap-1.5">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {timeStr}
+          </span>
         </div>
 
         {/* Bottom pills */}
-        <div className="mt-4 flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1.5 rounded-full border border-zinc-700 bg-zinc-800 px-3 py-1.5">
+        <div className="stagger-children mt-4 flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1.5 rounded-full border border-zinc-700 bg-zinc-800 px-3 py-1.5 transition-colors duration-200 hover:border-zinc-600">
             <svg className="h-3.5 w-3.5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span className="text-xs font-semibold text-white">{countdown}</span>
           </div>
-          <div className="rounded-full bg-cavs-wine px-4 py-1.5">
+          <div className="animate-glow-pulse rounded-full bg-cavs-wine px-4 py-1.5">
             <span className="text-xs font-bold text-white">
               Spread: CLE {spreadDisplay}
             </span>
           </div>
-          <div className="rounded-full bg-cavs-gold/20 px-4 py-1.5">
-            <span className="text-xs font-bold text-cavs-gold">
+          <div className="rounded-full bg-emerald-500/15 px-4 py-1.5">
+            <span className="text-xs font-bold text-emerald-400">
               Win +100 points
             </span>
           </div>
