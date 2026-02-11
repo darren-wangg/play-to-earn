@@ -161,6 +161,44 @@ export class OddsService {
     };
   }
 
+  async fetchCompletedScores(): Promise<
+    { gameId: string; homeScore: number; awayScore: number }[]
+  > {
+    const apiKey = this.configService.get<string>('ODDS_API_KEY');
+    if (!apiKey) return [];
+
+    try {
+      const response = await this.client.get<
+        {
+          id: string;
+          completed: boolean;
+          scores: { name: string; score: string }[] | null;
+        }[]
+      >('https://api.the-odds-api.com/v4/sports/basketball_nba/scores', {
+        params: { apiKey, daysFrom: 1 },
+        timeout: 10_000,
+      });
+
+      return response.data
+        .filter((g) => g.completed && g.scores?.length === 2)
+        .map((g) => {
+          const [team1, team2] = g.scores!;
+          // Scores API returns teams in home/away order matching the event
+          return {
+            gameId: g.id,
+            homeScore: parseInt(team1.score, 10),
+            awayScore: parseInt(team2.score, 10),
+          };
+        });
+    } catch (error) {
+      this.logger.error(
+        'Failed to fetch scores',
+        error instanceof Error ? error.message : String(error),
+      );
+      return [];
+    }
+  }
+
   private async getFallback(): Promise<FetchResult | null> {
     const staleGame = await this.gameModel
       .findOne({ status: 'upcoming' })

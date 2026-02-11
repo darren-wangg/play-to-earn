@@ -42,10 +42,16 @@ cd frontend && bun run build       # Production build
 - JWT-based auth: next-auth issues tokens, backend validates with shared NEXTAUTH_SECRET
 - AdminGuard: checks `x-admin-api-key` header
 - AuthGuard: validates JWT Bearer token
+- In-memory caching (5 min TTL) on GET /games/next
+- @nestjs/throttler rate limiting (30/min default, 5/min POST /bets)
+- axios-retry + circuit breaker on Odds API calls
+- @nestjs/schedule cron jobs (every 3 hours: odds refresh + auto-settle)
+- @nestjs/terminus health checks
+- Admin panel at /admin (frontend)
 
 ## Data Models
 - **User**: email, points (starts 0), timestamps
-- **Game**: gameId (unique, from Odds API), homeTeam, awayTeam, startTime, spread, status (upcoming|finished), finalHomeScore?, finalAwayScore?
+- **Game**: gameId (unique, from Odds API), homeTeam, awayTeam, startTime, spread, status (upcoming|finished), finalHomeScore?, finalAwayScore?, lastOddsFetchedAt?
 - **Bet**: userId (ref User), gameId (ref Game), selection (cavaliers|opponent), status (pending|won|lost|push) — compound unique index on (userId, gameId)
 
 ## API Endpoints
@@ -56,6 +62,8 @@ cd frontend && bun run build       # Production build
 | POST | /bets | User JWT | Place a bet |
 | GET | /bets | User JWT | List user's bets |
 | POST | /games/:gameId/settle | Admin | Submit scores, settle bets |
+| GET | /auth/me | User JWT | Get user email + points |
+| GET | /health | Public | Health check (MongoDB + Odds API) |
 
 ## Settlement Logic
 ```
@@ -83,8 +91,8 @@ Picked "opponent":  adjustedMargin < 0 = won (+100pts), > 0 = lost, === 0 = push
 - [x] Phase 6: Frontend UI
 - [x] Phase 7: Polish & Edge Cases
 - [x] Phase 8: Documentation
-- [ ] Phase 9: Bonus Features
-- [ ] Phase 10: Testing
+- [x] Phase 9: Bonus Features (admin panel, cron jobs, health checks, rate limiting, caching, circuit breaker)
+- [x] Phase 10: Testing (unit tests: 20 passing)
 
 ## Conventions
 - Use Bun for all package management (`bun add`, `bun install`)
@@ -93,6 +101,9 @@ Picked "opponent":  adjustedMargin < 0 = won (+100pts), > 0 = lost, === 0 = push
 - One bet per user per game (enforced by DB unique index)
 - Admin operations via cURL only (no admin UI in MVP)
 - Periodically add to the root README.md file to document how to run everything. Including env variables, commands to start backend and frontend, etc.
+- Cron jobs run every 3 hours (~480 req/month, within 500 free tier)
+- .lean() used on all read queries
+- MongoDB connection pooling (maxPoolSize: 50, minPoolSize: 10)
 
 ## Git
 - I want each Phase to be submitted as a feature branch, against a main branch that I will periodically merge into

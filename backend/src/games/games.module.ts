@@ -7,6 +7,7 @@ import { GamesController } from './games.controller';
 import { GamesService } from './games.service';
 import { OddsService } from './odds.service';
 import { SettleService } from './settle.service';
+import { CronService } from './cron.service';
 
 @Module({
   imports: [
@@ -17,7 +18,7 @@ import { SettleService } from './settle.service';
     ]),
   ],
   controllers: [GamesController],
-  providers: [GamesService, OddsService, SettleService],
+  providers: [GamesService, OddsService, SettleService, CronService],
   exports: [GamesService],
 })
 export class GamesModule {}
