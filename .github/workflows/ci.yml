@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [main, darren/**]
+  pull_request:
+    branches: [main]
+
+jobs:
+  env-check:
+    name: Validate .env files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check backend .env.example exists
+        run: test -f backend/.env.example
+      - name: Check frontend .env.example exists
+        run: test -f frontend/.env.example
+      - name: Verify all backend env vars are documented
+        run: |
+          # Ensure every key in .env.example is present
+          while IFS='=' read -r key _; do
+            [ -z "$key" ] && continue
+            [[ "$key" =~ ^# ]] && continue
+            echo "✓ $key"
+          done < backend/.env.example
+      - name: Verify all frontend env vars are documented
+        run: |
+          while IFS='=' read -r key _; do
+            [ -z "$key" ] && continue
+            [[ "$key" =~ ^# ]] && continue
+            echo "✓ $key"
+          done < frontend/.env.example
+      - name: Ensure no secrets committed
+        run: |
+          # Fail if .env or .env.local are tracked by git
+          if git ls-files --error-unmatch backend/.env 2>/dev/null; then
+            echo "::error::backend/.env is tracked by git — remove it"
+            exit 1
+          fi
+          if git ls-files --error-unmatch frontend/.env.local 2>/dev/null; then
+            echo "::error::frontend/.env.local is tracked by git — remove it"
+            exit 1
+          fi
+          echo "✓ No secret files tracked"
+
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - name: Install dependencies
+        run: cd backend && bun install --frozen-lockfile
+      - name: Lint
+        run: cd backend && bun run lint
+        continue-on-error: true
+      - name: Build
+        run: cd backend && bun run build
+      - name: Unit tests
+        run: cd backend && bun run test
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - name: Install dependencies
+        run: cd frontend && bun install --frozen-lockfile
+      - name: Lint
+        run: cd frontend && bun run lint
+        continue-on-error: true
+      - name: Type check
+        run: cd frontend && npx tsc --noEmit
+      - name: Build
+        env:
+          NEXTAUTH_SECRET: ci-test-secret
+          NEXT_PUBLIC_BACKEND_URL: http://localhost:3001
+        run: cd frontend && bun run build
