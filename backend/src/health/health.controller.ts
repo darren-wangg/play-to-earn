@@ -19,14 +19,14 @@ export class HealthController {
   @Get()
   @HealthCheck()
   check() {
-    const oddsEndpoint = this.config.get<string>('ODDS_API_ENDPOINT');
+    const apiKey = this.config.get<string>('ODDS_API_KEY');
 
     return this.health.check([
       () => this.mongoose.pingCheck('mongodb'),
       () =>
         this.http.pingCheck(
           'odds-api',
-          oddsEndpoint || 'https://api.the-odds-api.com/v4/sports',
+          `https://api.the-odds-api.com/v4/sports?apiKey=${apiKey}`,
         ),
     ]);
   }

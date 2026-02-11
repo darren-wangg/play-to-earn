@@ -6,7 +6,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { STATUS_CODES } from 'http';
-import { Response } from 'express';
+import { Response, Request } from 'express';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -15,6 +15,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
+    const request = ctx.getRequest<Request>();
 
     let statusCode = 500;
     let message = 'Internal server error';
@@ -22,6 +23,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       statusCode = exception.getStatus();
       const res = exception.getResponse();
+
+      // Pass through structured responses (e.g., from @nestjs/terminus health checks)
+      if (request.path === '/health' && typeof res === 'object') {
+        return response.status(statusCode).json(res);
+      }
+
       message =
         typeof res === 'string'
           ? res
