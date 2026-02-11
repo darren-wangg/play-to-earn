@@ -1,10 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, forwardRef, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
-import { Game, GameDocument } from '../schemas/game.schema';
+import { GamesService } from './games.service';
 
 interface OddsOutcome {
   name: string;
@@ -59,7 +57,8 @@ export class OddsService {
 
   constructor(
     private configService: ConfigService,
-    @InjectModel(Game.name) private gameModel: Model<GameDocument>,
+    @Inject(forwardRef(() => GamesService))
+    private gamesService: GamesService,
   ) {
     // Configure axios-retry: 3 attempts with exponential backoff (1s, 2s, 4s)
     axiosRetry(this.client, {
@@ -71,6 +70,10 @@ export class OddsService {
     });
   }
 
+  /**
+   * Fetches the next Cavaliers game from The Odds API with spreads.
+   * Uses a circuit breaker: if the API fails, returns stale DB data for 30s before retrying.
+   */
   async fetchNextCavsGame(): Promise<FetchResult | null> {
     const apiKey = this.configService.get<string>('ODDS_API_KEY');
     const url = this.configService.get<string>('ODDS_API_ENDPOINT');
@@ -161,6 +164,7 @@ export class OddsService {
     };
   }
 
+  /** Fetches recently completed NBA scores for auto-settlement. */
   async fetchCompletedScores(): Promise<
     { gameId: string; homeScore: number; awayScore: number }[]
   > {
@@ -200,10 +204,7 @@ export class OddsService {
   }
 
   private async getFallback(): Promise<FetchResult | null> {
-    const staleGame = await this.gameModel
-      .findOne({ status: 'upcoming' })
-      .sort({ startTime: -1 })
-      .lean();
+    const staleGame = await this.gamesService.getLastUpcomingGame();
 
     if (staleGame) {
       this.logger.warn('Returning stale game data as fallback');

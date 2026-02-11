@@ -29,14 +29,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
         return response.status(statusCode).json(res);
       }
 
-      message =
-        typeof res === 'string'
-          ? res
-          : (res as { message?: string | string[] }).message
-            ? Array.isArray((res as { message: string | string[] }).message)
-              ? ((res as { message: string[] }).message).join(', ')
-              : ((res as { message: string }).message)
-            : exception.message;
+      if (typeof res === 'string') {
+        message = res;
+      } else {
+        const resMsg = (res as { message?: string | string[] }).message;
+        message = Array.isArray(resMsg) ? resMsg.join(', ') : resMsg || exception.message;
+      }
     } else {
       this.logger.error(
         'Unexpected exception',

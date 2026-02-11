@@ -16,6 +16,7 @@ export class BetsService {
     private gamesService: GamesService,
   ) {}
 
+  /** Places a bet on an upcoming game. One bet per user per game (enforced by DB unique index). */
   async placeBet(userId: string, dto: PlaceBetDto): Promise<BetDocument> {
     const game = await this.gamesService.findByGameId(dto.gameId);
     if (!game) {
@@ -44,6 +45,7 @@ export class BetsService {
     }
   }
 
+  /** Returns all bets for a user, most recent first, with game details populated. */
   async findByUserId(userId: string): Promise<BetDocument[]> {
     return this.betModel
       .find({ userId: new Types.ObjectId(userId) })

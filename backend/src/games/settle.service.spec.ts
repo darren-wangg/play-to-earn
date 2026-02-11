@@ -31,12 +31,14 @@ describe('SettleService', () => {
   let gameModel: any;
   let betModel: any;
   let userModel: any;
+  let gamesService: any;
 
   beforeEach(() => {
     gameModel = { findOne: jest.fn() };
     betModel = { find: jest.fn() };
     userModel = { updateOne: jest.fn() };
-    service = new SettleService(gameModel as any, betModel as any, userModel as any);
+    gamesService = { clearCache: jest.fn() };
+    service = new SettleService(gameModel as any, betModel as any, userModel as any, gamesService as any);
   });
 
   it('should throw NotFoundException if game not found', async () => {

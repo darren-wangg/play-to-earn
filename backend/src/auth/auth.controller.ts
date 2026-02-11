@@ -16,7 +16,7 @@ export class AuthController {
       dto.email,
       dto.password,
     );
-    return { email: user.email, message: 'Registration successful' };
+    return { email: user.email, id: user._id };
   }
 
   @Post('login')
