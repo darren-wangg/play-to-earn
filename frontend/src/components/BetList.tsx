@@ -122,6 +122,12 @@ export default function BetList({ refreshKey }: { refreshKey: number }) {
           month: "short",
           day: "numeric",
         });
+        const betTime = new Date(bet.createdAt).toLocaleString("en-US", {
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+        });
         const hasScore = game.finalHomeScore != null && game.finalAwayScore != null;
 
         return (
@@ -145,6 +151,8 @@ export default function BetList({ refreshKey }: { refreshKey: number }) {
                     {pickedTeam}
                   </span>
                   {" "}({game.spread > 0 ? "+" : ""}{game.spread})
+                  <span className="mx-1.5 text-zinc-300 dark:text-zinc-600">·</span>
+                  Placed {betTime}
                 </p>
                 {hasScore && (
                   <div className="mt-2 flex items-center gap-2 rounded-md bg-zinc-50 px-3 py-1.5 dark:bg-zinc-800">
