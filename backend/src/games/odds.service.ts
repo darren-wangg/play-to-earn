@@ -1,4 +1,4 @@
-import { Injectable, Logger, forwardRef, Inject } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
@@ -38,7 +38,7 @@ export interface ParsedCavsGame {
   spread: number;
 }
 
-export interface FetchResult {
+interface FetchResult {
   game: ParsedCavsGame;
   staleWarning: boolean;
 }
@@ -57,7 +57,6 @@ export class OddsService {
 
   constructor(
     private configService: ConfigService,
-    @Inject(forwardRef(() => GamesService))
     private gamesService: GamesService,
   ) {
     // Configure axios-retry: 3 attempts with exponential backoff (1s, 2s, 4s)

@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { ConfigService } from '@nestjs/config';
 import { GamesService } from './games.service';
 import { OddsService } from './odds.service';
 import { SettleService } from './settle.service';
@@ -13,7 +12,6 @@ export class CronService {
     private gamesService: GamesService,
     private oddsService: OddsService,
     private settleService: SettleService,
-    private config: ConfigService,
   ) {}
 
   /**
