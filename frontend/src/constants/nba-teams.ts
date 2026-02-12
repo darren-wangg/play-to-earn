@@ -264,4 +264,4 @@ export function getTeam(name: string): NbaTeam {
   );
 }
 
-export default NBA_TEAMS;
+// Default export intentionally omitted — use getTeam() for lookups
